@@ -1,13 +1,11 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
+import Link from "next/link";
 import api from "@/lib/api";
 import { useAuth } from "@/hooks/useAuth";
 import { Navbar } from "@/components/navbar";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
+import { Upload, Plus, X, Pencil, Trash2, ChevronRight } from "lucide-react";
 
 interface Player {
   id: string;
@@ -16,6 +14,7 @@ interface Player {
   jerseyNumber?: number;
   position?: string;
   isActive: boolean;
+  photo?: string;
 }
 
 const emptyForm = {
@@ -23,7 +22,40 @@ const emptyForm = {
   lastName: "",
   jerseyNumber: "",
   position: "",
+  photo: "",
 };
+
+function Avatar({ player, size = 40 }: { player: Player; size?: number }) {
+  const initials = `${player.firstName[0] ?? ""}${player.lastName[0] ?? ""}`.toUpperCase();
+  if (player.photo) {
+    return (
+      <img
+        src={player.photo}
+        alt={`${player.firstName} ${player.lastName}`}
+        width={size}
+        height={size}
+        className="rounded-full object-cover"
+        style={{ width: size, height: size, minWidth: size }}
+      />
+    );
+  }
+  return (
+    <div
+      className="rounded-full flex items-center justify-center text-xs font-black"
+      style={{
+        width: size,
+        height: size,
+        minWidth: size,
+        background: "var(--wfc-green-dim)",
+        color: "var(--wfc-green)",
+        border: "1px solid rgba(34,197,94,0.25)",
+        fontSize: size > 36 ? "0.8rem" : "0.65rem",
+      }}
+    >
+      {initials}
+    </div>
+  );
+}
 
 export default function PlayersPage() {
   useAuth();
@@ -35,6 +67,8 @@ export default function PlayersPage() {
   const [form, setForm] = useState(emptyForm);
   const [submitting, setSubmitting] = useState(false);
   const [message, setMessage] = useState("");
+  const [uploading, setUploading] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const load = async () => {
     try {
@@ -49,20 +83,29 @@ export default function PlayersPage() {
 
   useEffect(() => {
     let active = true;
-    api.get<Player[]>("/players")
-      .then((res) => {
-        if (active) setPlayers(res.data);
-      })
-      .catch(() => {
-        if (active) setPlayers([]);
-      })
-      .finally(() => {
-        if (active) setLoading(false);
-      });
-    return () => {
-      active = false;
-    };
+    api
+      .get<Player[]>("/players")
+      .then((res) => { if (active) setPlayers(res.data); })
+      .catch(() => { if (active) setPlayers([]); })
+      .finally(() => { if (active) setLoading(false); });
+    return () => { active = false; };
   }, []);
+
+  const handlePhotoUpload = async (file: File, playerId?: string) => {
+    setUploading(true);
+    try {
+      const fd = new FormData();
+      fd.append("file", file);
+      if (playerId) fd.append("playerId", playerId);
+      const res = await fetch("/api/upload", { method: "POST", body: fd });
+      const data = await res.json() as { path: string };
+      setForm((p) => ({ ...p, photo: data.path }));
+    } catch {
+      setMessage("Photo upload failed.");
+    } finally {
+      setUploading(false);
+    }
+  };
 
   const openAdd = () => {
     setEditingId(null);
@@ -78,6 +121,7 @@ export default function PlayersPage() {
       lastName: p.lastName,
       jerseyNumber: p.jerseyNumber?.toString() ?? "",
       position: p.position ?? "",
+      photo: p.photo ?? "",
     });
     setMessage("");
     setShowForm(true);
@@ -93,6 +137,7 @@ export default function PlayersPage() {
         lastName: form.lastName,
         jerseyNumber: form.jerseyNumber ? Number(form.jerseyNumber) : undefined,
         position: form.position || undefined,
+        photo: form.photo || undefined,
       };
       if (editingId) {
         await api.patch(`/players/${editingId}`, payload);
@@ -131,182 +176,255 @@ export default function PlayersPage() {
     }
   };
 
+  const activePlayers = players.filter((p) => p.isActive);
+
   return (
-    <div className="min-h-screen bg-slate-50">
+    <div className="min-h-screen pb-20 md:pb-0" style={{ background: "var(--background)" }}>
       <Navbar />
-      <main className="mx-auto max-w-7xl p-6 space-y-6">
+      <main className="mx-auto max-w-7xl px-4 sm:px-6 py-8 space-y-8">
         {/* Header */}
         <div className="flex items-center justify-between">
           <div>
-            <h1 className="text-3xl font-semibold text-slate-900">Players</h1>
-            <p className="text-sm text-slate-500">
-              {players.filter((p) => p.isActive).length} active ·{" "}
-              {players.length} total
+            <h1 className="text-3xl font-black" style={{ color: "var(--wfc-text)" }}>
+              Players
+            </h1>
+            <p className="text-sm mt-1" style={{ color: "var(--wfc-text-muted)" }}>
+              {activePlayers.length} active · {players.length} total
             </p>
           </div>
-          <Button onClick={showForm ? () => setShowForm(false) : openAdd}>
-            {showForm ? "Cancel" : "Add Player"}
-          </Button>
+          <button
+            onClick={showForm ? () => setShowForm(false) : openAdd}
+            className="flex items-center gap-2 rounded-xl px-4 py-2.5 text-sm font-bold transition-all"
+            style={{
+              background: showForm ? "var(--wfc-surface-2)" : "linear-gradient(135deg, var(--wfc-green) 0%, var(--wfc-green-dark) 100%)",
+              color: showForm ? "var(--wfc-text-muted)" : "var(--wfc-surface)",
+              border: showForm ? "1px solid var(--wfc-border)" : "none",
+              boxShadow: showForm ? "none" : "0 4px 14px rgba(34,197,94,0.30)",
+            }}
+          >
+            {showForm ? <><X size={15} /> Cancel</> : <><Plus size={15} /> Add Player</>}
+          </button>
         </div>
 
         {/* Add / Edit form */}
         {showForm && (
-          <Card>
-            <CardHeader>
-              <CardTitle>{editingId ? "Edit Player" : "Add New Player"}</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <form
-                onSubmit={handleSubmit}
-                className="grid gap-4 sm:grid-cols-2"
-              >
-                <div className="space-y-2">
-                  <Label htmlFor="firstName">First Name *</Label>
-                  <Input
-                    id="firstName"
-                    value={form.firstName}
-                    onChange={(e) =>
-                      setForm((p) => ({ ...p, firstName: e.target.value }))
-                    }
-                    required
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="lastName">Last Name *</Label>
-                  <Input
-                    id="lastName"
-                    value={form.lastName}
-                    onChange={(e) =>
-                      setForm((p) => ({ ...p, lastName: e.target.value }))
-                    }
-                    required
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="jerseyNumber">Jersey Number</Label>
-                  <Input
-                    id="jerseyNumber"
-                    type="number"
-                    min="1"
-                    max="99"
-                    value={form.jerseyNumber}
-                    onChange={(e) =>
-                      setForm((p) => ({ ...p, jerseyNumber: e.target.value }))
-                    }
-                    placeholder="e.g. 10"
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="position">Position</Label>
-                  <Input
-                    id="position"
-                    value={form.position}
-                    onChange={(e) =>
-                      setForm((p) => ({ ...p, position: e.target.value }))
-                    }
-                    placeholder="e.g. Forward"
-                  />
-                </div>
-                <div className="sm:col-span-2 flex items-center gap-4">
-                  <Button type="submit" disabled={submitting}>
-                    {submitting
-                      ? "Saving…"
-                      : editingId
-                      ? "Update Player"
-                      : "Add Player"}
-                  </Button>
-                  {message && (
-                    <p className="text-sm text-slate-600">{message}</p>
+          <div
+            className="rounded-2xl p-6 space-y-6"
+            style={{ background: "var(--wfc-surface)", border: "1px solid var(--wfc-border)" }}
+          >
+            <h2 className="text-lg font-bold" style={{ color: "var(--wfc-text)" }}>
+              {editingId ? "Edit Player" : "Add New Player"}
+            </h2>
+            <form onSubmit={handleSubmit} className="grid gap-5 sm:grid-cols-2">
+              {/* Photo upload */}
+              <div className="sm:col-span-2 flex items-center gap-5">
+                <div
+                  className="flex h-20 w-20 shrink-0 items-center justify-center rounded-2xl overflow-hidden"
+                  style={{ border: "2px dashed var(--wfc-border)", background: "var(--wfc-surface-2)", cursor: "pointer" }}
+                  onClick={() => fileInputRef.current?.click()}
+                >
+                  {form.photo ? (
+                    <img src={form.photo} alt="Preview" className="w-full h-full object-cover" />
+                  ) : (
+                    <Upload size={24} style={{ color: "var(--wfc-text-muted)" }} />
                   )}
                 </div>
-              </form>
-            </CardContent>
-          </Card>
+                <div>
+                  <p className="text-sm font-semibold" style={{ color: "var(--wfc-text)" }}>
+                    Player Photo
+                  </p>
+                  <p className="text-xs mt-0.5 mb-2" style={{ color: "var(--wfc-text-muted)" }}>
+                    JPG, PNG · Max 5MB
+                  </p>
+                  <button
+                    type="button"
+                    onClick={() => fileInputRef.current?.click()}
+                    disabled={uploading}
+                    className="rounded-lg px-3 py-1.5 text-xs font-semibold transition-all"
+                    style={{
+                      background: "var(--wfc-green-dim)",
+                      color: "var(--wfc-green)",
+                      border: "1px solid rgba(34,197,94,0.25)",
+                    }}
+                  >
+                    {uploading ? "Uploading…" : "Choose Photo"}
+                  </button>
+                  <input
+                    ref={fileInputRef}
+                    type="file"
+                    accept="image/*"
+                    className="hidden"
+                    onChange={(e) => {
+                      const file = e.target.files?.[0];
+                      if (file) void handlePhotoUpload(file, editingId ?? undefined);
+                    }}
+                  />
+                </div>
+              </div>
+
+              {/* Fields */}
+              {[
+                { id: "firstName", label: "First Name *", placeholder: "James", type: "text", required: true },
+                { id: "lastName", label: "Last Name *", placeholder: "Wilson", type: "text", required: true },
+                { id: "jerseyNumber", label: "Jersey Number", placeholder: "10", type: "number" },
+                { id: "position", label: "Position", placeholder: "Forward", type: "text" },
+              ].map((field) => (
+                <div key={field.id} className="space-y-1.5">
+                  <label
+                    htmlFor={field.id}
+                    className="block text-sm font-medium"
+                    style={{ color: "var(--wfc-text-subtle)" }}
+                  >
+                    {field.label}
+                  </label>
+                  <input
+                    id={field.id}
+                    type={field.type}
+                    min={field.id === "jerseyNumber" ? 1 : undefined}
+                    max={field.id === "jerseyNumber" ? 99 : undefined}
+                    placeholder={field.placeholder}
+                    required={field.required}
+                    value={form[field.id as keyof typeof form]}
+                    onChange={(e) => setForm((p) => ({ ...p, [field.id]: e.target.value }))}
+                    className="w-full rounded-xl px-4 py-2.5 text-sm outline-none transition-all"
+                    style={{
+                      background: "var(--wfc-surface-2)",
+                      border: "1px solid var(--wfc-border)",
+                      color: "var(--wfc-text)",
+                    }}
+                    onFocus={(e) => {
+                      (e.currentTarget as HTMLInputElement).style.borderColor = "var(--wfc-green)";
+                      (e.currentTarget as HTMLInputElement).style.boxShadow = "0 0 0 3px rgba(34,197,94,0.12)";
+                    }}
+                    onBlur={(e) => {
+                      (e.currentTarget as HTMLInputElement).style.borderColor = "var(--wfc-border)";
+                      (e.currentTarget as HTMLInputElement).style.boxShadow = "none";
+                    }}
+                  />
+                </div>
+              ))}
+
+              <div className="sm:col-span-2 flex items-center gap-4">
+                <button
+                  type="submit"
+                  disabled={submitting || uploading}
+                  className="rounded-xl px-6 py-2.5 text-sm font-bold transition-all disabled:opacity-60"
+                  style={{
+                    background: "linear-gradient(135deg, var(--wfc-green) 0%, var(--wfc-green-dark) 100%)",
+                    color: "var(--wfc-surface)",
+                    boxShadow: "0 4px 14px rgba(34,197,94,0.25)",
+                  }}
+                >
+                  {submitting ? "Saving…" : editingId ? "Update Player" : "Add Player"}
+                </button>
+                {message && (
+                  <p
+                    className="text-sm font-medium"
+                    style={{ color: message.includes("Failed") ? "#ef4444" : "var(--wfc-green)" }}
+                  >
+                    {message}
+                  </p>
+                )}
+              </div>
+            </form>
+          </div>
         )}
 
-        {/* Players table */}
-        <Card>
-          <CardContent className="p-0">
-            {loading ? (
-              <p className="p-6 text-slate-500">Loading players…</p>
-            ) : players.length === 0 ? (
-              <p className="p-6 text-slate-500">
-                No players yet. Click &ldquo;Add Player&rdquo; to get started.
-              </p>
-            ) : (
-              <div className="overflow-x-auto">
-                <table className="w-full text-sm">
-                  <thead className="border-b bg-slate-50">
-                    <tr>
-                      <th className="px-4 py-3 text-left font-medium text-slate-600">
-                        Name
-                      </th>
-                      <th className="px-4 py-3 text-left font-medium text-slate-600">
-                        Jersey #
-                      </th>
-                      <th className="px-4 py-3 text-left font-medium text-slate-600">
-                        Position
-                      </th>
-                      <th className="px-4 py-3 text-left font-medium text-slate-600">
-                        Status
-                      </th>
-                      <th className="px-4 py-3 text-right font-medium text-slate-600">
-                        Actions
-                      </th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y">
-                    {players.map((player) => (
-                      <tr key={player.id} className="hover:bg-slate-50/50">
-                        <td className="px-4 py-3 font-medium">
-                          {player.firstName} {player.lastName}
-                        </td>
-                        <td className="px-4 py-3 text-slate-600">
-                          {player.jerseyNumber != null
-                            ? `#${player.jerseyNumber}`
-                            : "—"}
-                        </td>
-                        <td className="px-4 py-3 text-slate-600">
-                          {player.position || "—"}
-                        </td>
-                        <td className="px-4 py-3">
-                          <button
-                            onClick={() => handleToggleActive(player)}
-                            title="Click to toggle active status"
-                            className={`rounded-full px-2.5 py-0.5 text-xs font-medium transition-colors ${
-                              player.isActive
-                                ? "bg-green-100 text-green-700 hover:bg-green-200"
-                                : "bg-slate-100 text-slate-500 hover:bg-slate-200"
-                            }`}
-                          >
-                            {player.isActive ? "Active" : "Inactive"}
-                          </button>
-                        </td>
-                        <td className="px-4 py-3 text-right space-x-2">
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={() => openEdit(player)}
-                          >
-                            Edit
-                          </Button>
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={() => handleDelete(player.id)}
-                            className="text-red-600 border-red-200 hover:bg-red-50 hover:text-red-700"
-                          >
-                            Delete
-                          </Button>
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
+        {/* Players grid */}
+        {loading ? (
+          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+            {Array.from({ length: 8 }).map((_, i) => (
+              <div
+                key={i}
+                className="rounded-2xl p-5 animate-pulse"
+                style={{ background: "var(--wfc-surface)", border: "1px solid var(--wfc-border)", height: 140 }}
+              />
+            ))}
+          </div>
+        ) : players.length === 0 ? (
+          <div className="text-center py-20">
+            <div className="text-6xl mb-4">👥</div>
+            <p className="text-lg font-semibold" style={{ color: "var(--wfc-text)" }}>No players yet</p>
+            <p className="text-sm mt-1" style={{ color: "var(--wfc-text-muted)" }}>Click &ldquo;Add Player&rdquo; to get started.</p>
+          </div>
+        ) : (
+          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+            {players.map((player) => (
+              <div
+                key={player.id}
+                className="rounded-2xl p-5 flex flex-col gap-4 transition-all duration-200 group"
+                style={{
+                  background: "var(--wfc-surface)",
+                  border: "1px solid var(--wfc-border)",
+                }}
+                onMouseEnter={(e) => {
+                  (e.currentTarget as HTMLElement).style.borderColor = "rgba(34,197,94,0.3)";
+                  (e.currentTarget as HTMLElement).style.boxShadow = "0 0 20px rgba(34,197,94,0.07)";
+                }}
+                onMouseLeave={(e) => {
+                  (e.currentTarget as HTMLElement).style.borderColor = "var(--wfc-border)";
+                  (e.currentTarget as HTMLElement).style.boxShadow = "none";
+                }}
+              >
+                {/* Avatar + name */}
+                <div className="flex items-center gap-3">
+                  <Avatar player={player} size={48} />
+                  <div className="min-w-0">
+                    <p className="font-bold text-sm truncate" style={{ color: "var(--wfc-text)" }}>
+                      {player.firstName} {player.lastName}
+                    </p>
+                    <p className="text-xs truncate" style={{ color: "var(--wfc-text-muted)" }}>
+                      {player.position || "No position"}
+                      {player.jerseyNumber != null && ` · #${player.jerseyNumber}`}
+                    </p>
+                  </div>
+                </div>
+
+                {/* Status badge */}
+                <div className="flex items-center justify-between">
+                  <button
+                    onClick={() => handleToggleActive(player)}
+                    className="rounded-full px-3 py-1 text-xs font-semibold transition-all"
+                    style={{
+                      background: player.isActive ? "rgba(34,197,94,0.12)" : "rgba(100,116,139,0.12)",
+                      color: player.isActive ? "var(--wfc-green)" : "var(--wfc-text-muted)",
+                      border: player.isActive ? "1px solid rgba(34,197,94,0.25)" : "1px solid rgba(100,116,139,0.2)",
+                    }}
+                  >
+                    {player.isActive ? "Active" : "Inactive"}
+                  </button>
+                </div>
+
+                {/* Actions */}
+                <div className="flex gap-2 pt-1 border-t" style={{ borderColor: "var(--wfc-border)" }}>
+                  <Link
+                    href={`/players/${player.id}`}
+                    className="flex-1 flex items-center justify-center gap-1 rounded-lg py-1.5 text-xs font-semibold transition-all"
+                    style={{ background: "var(--wfc-surface-2)", color: "var(--wfc-text-subtle)", border: "1px solid var(--wfc-border)" }}
+                  >
+                    Profile <ChevronRight size={12} />
+                  </Link>
+                  <button
+                    onClick={() => openEdit(player)}
+                    className="flex items-center justify-center rounded-lg px-2.5 py-1.5 text-xs transition-all"
+                    style={{ background: "var(--wfc-surface-2)", color: "var(--wfc-text-subtle)", border: "1px solid var(--wfc-border)" }}
+                    title="Edit"
+                  >
+                    <Pencil size={13} />
+                  </button>
+                  <button
+                    onClick={() => handleDelete(player.id)}
+                    className="flex items-center justify-center rounded-lg px-2.5 py-1.5 text-xs transition-all"
+                    style={{ background: "rgba(239,68,68,0.08)", color: "#ef4444", border: "1px solid rgba(239,68,68,0.2)" }}
+                    title="Delete"
+                  >
+                    <Trash2 size={13} />
+                  </button>
+                </div>
               </div>
-            )}
-          </CardContent>
-        </Card>
+            ))}
+          </div>
+        )}
       </main>
     </div>
   );
