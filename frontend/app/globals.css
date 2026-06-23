@@ -1,3 +1,4 @@
+@import url("https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap");
 @import "tailwindcss";
 @import "tw-animate-css";
 @import "shadcn/tailwind.css";
@@ -7,9 +8,9 @@
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
-  --font-sans: var(--font-sans);
+  --font-sans: var(--font-inter), "Inter", ui-sans-serif, system-ui, sans-serif;
   --font-mono: var(--font-geist-mono);
-  --font-heading: var(--font-sans);
+  --font-heading: var(--font-inter), "Inter", ui-sans-serif, system-ui, sans-serif;
   --color-sidebar-ring: var(--sidebar-ring);
   --color-sidebar-border: var(--sidebar-border);
   --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
@@ -48,73 +49,93 @@
   --radius-4xl: calc(var(--radius) * 2.6);
 }
 
+/* ─── Whitefield FC Dark Theme ─────────────────────────────── */
 :root {
-  --background: oklch(1 0 0);
-  --foreground: oklch(0.145 0 0);
-  --card: oklch(1 0 0);
-  --card-foreground: oklch(0.145 0 0);
-  --popover: oklch(1 0 0);
-  --popover-foreground: oklch(0.145 0 0);
-  --primary: oklch(0.205 0 0);
-  --primary-foreground: oklch(0.985 0 0);
-  --secondary: oklch(0.97 0 0);
-  --secondary-foreground: oklch(0.205 0 0);
-  --muted: oklch(0.97 0 0);
-  --muted-foreground: oklch(0.556 0 0);
-  --accent: oklch(0.97 0 0);
-  --accent-foreground: oklch(0.205 0 0);
-  --destructive: oklch(0.577 0.245 27.325);
-  --border: oklch(0.922 0 0);
-  --input: oklch(0.922 0 0);
-  --ring: oklch(0.708 0 0);
-  --chart-1: oklch(0.87 0 0);
-  --chart-2: oklch(0.556 0 0);
-  --chart-3: oklch(0.439 0 0);
-  --chart-4: oklch(0.371 0 0);
-  --chart-5: oklch(0.269 0 0);
-  --radius: 0.625rem;
-  --sidebar: oklch(0.985 0 0);
-  --sidebar-foreground: oklch(0.145 0 0);
-  --sidebar-primary: oklch(0.205 0 0);
-  --sidebar-primary-foreground: oklch(0.985 0 0);
-  --sidebar-accent: oklch(0.97 0 0);
-  --sidebar-accent-foreground: oklch(0.205 0 0);
-  --sidebar-border: oklch(0.922 0 0);
-  --sidebar-ring: oklch(0.708 0 0);
+  /* Force dark — WFC always uses dark theme */
+  --background: #0d0f14;
+  --foreground: #f1f5f9;
+  --card: #161a23;
+  --card-foreground: #f1f5f9;
+  --popover: #1e2330;
+  --popover-foreground: #f1f5f9;
+
+  /* Green accent — Whitefield FC */
+  --primary: #22c55e;
+  --primary-foreground: #0d0f14;
+
+  --secondary: #1e2330;
+  --secondary-foreground: #94a3b8;
+  --muted: #1e2330;
+  --muted-foreground: #64748b;
+  --accent: #1e2330;
+  --accent-foreground: #f1f5f9;
+  --destructive: #ef4444;
+  --border: #1e2733;
+  --input: #1e2733;
+  --ring: #22c55e;
+
+  --chart-1: #22c55e;
+  --chart-2: #16a34a;
+  --chart-3: #15803d;
+  --chart-4: #166534;
+  --chart-5: #14532d;
+
+  --radius: 0.75rem;
+
+  --sidebar: #161a23;
+  --sidebar-foreground: #f1f5f9;
+  --sidebar-primary: #22c55e;
+  --sidebar-primary-foreground: #0d0f14;
+  --sidebar-accent: #1e2330;
+  --sidebar-accent-foreground: #f1f5f9;
+  --sidebar-border: #1e2733;
+  --sidebar-ring: #22c55e;
+
+  /* WFC custom tokens */
+  --wfc-green: #22c55e;
+  --wfc-green-dark: #16a34a;
+  --wfc-green-dim: rgba(34, 197, 94, 0.12);
+  --wfc-surface: #161a23;
+  --wfc-surface-2: #1e2330;
+  --wfc-border: #1e2733;
+  --wfc-text: #f1f5f9;
+  --wfc-text-muted: #64748b;
+  --wfc-text-subtle: #94a3b8;
 }
 
+/* Keep .dark in sync (shadcn components rely on it) */
 .dark {
-  --background: oklch(0.145 0 0);
-  --foreground: oklch(0.985 0 0);
-  --card: oklch(0.205 0 0);
-  --card-foreground: oklch(0.985 0 0);
-  --popover: oklch(0.205 0 0);
-  --popover-foreground: oklch(0.985 0 0);
-  --primary: oklch(0.922 0 0);
-  --primary-foreground: oklch(0.205 0 0);
-  --secondary: oklch(0.269 0 0);
-  --secondary-foreground: oklch(0.985 0 0);
-  --muted: oklch(0.269 0 0);
-  --muted-foreground: oklch(0.708 0 0);
-  --accent: oklch(0.269 0 0);
-  --accent-foreground: oklch(0.985 0 0);
-  --destructive: oklch(0.704 0.191 22.216);
-  --border: oklch(1 0 0 / 10%);
-  --input: oklch(1 0 0 / 15%);
-  --ring: oklch(0.556 0 0);
-  --chart-1: oklch(0.87 0 0);
-  --chart-2: oklch(0.556 0 0);
-  --chart-3: oklch(0.439 0 0);
-  --chart-4: oklch(0.371 0 0);
-  --chart-5: oklch(0.269 0 0);
-  --sidebar: oklch(0.205 0 0);
-  --sidebar-foreground: oklch(0.985 0 0);
-  --sidebar-primary: oklch(0.488 0.243 264.376);
-  --sidebar-primary-foreground: oklch(0.985 0 0);
-  --sidebar-accent: oklch(0.269 0 0);
-  --sidebar-accent-foreground: oklch(0.985 0 0);
-  --sidebar-border: oklch(1 0 0 / 10%);
-  --sidebar-ring: oklch(0.556 0 0);
+  --background: #0d0f14;
+  --foreground: #f1f5f9;
+  --card: #161a23;
+  --card-foreground: #f1f5f9;
+  --popover: #1e2330;
+  --popover-foreground: #f1f5f9;
+  --primary: #22c55e;
+  --primary-foreground: #0d0f14;
+  --secondary: #1e2330;
+  --secondary-foreground: #94a3b8;
+  --muted: #1e2330;
+  --muted-foreground: #64748b;
+  --accent: #1e2330;
+  --accent-foreground: #f1f5f9;
+  --destructive: #ef4444;
+  --border: #1e2733;
+  --input: #1e2733;
+  --ring: #22c55e;
+  --chart-1: #22c55e;
+  --chart-2: #16a34a;
+  --chart-3: #15803d;
+  --chart-4: #166534;
+  --chart-5: #14532d;
+  --sidebar: #161a23;
+  --sidebar-foreground: #f1f5f9;
+  --sidebar-primary: #22c55e;
+  --sidebar-primary-foreground: #0d0f14;
+  --sidebar-accent: #1e2330;
+  --sidebar-accent-foreground: #f1f5f9;
+  --sidebar-border: #1e2733;
+  --sidebar-ring: #22c55e;
 }
 
 @layer base {
@@ -123,8 +144,75 @@
   }
   body {
     @apply bg-background text-foreground;
+    font-family: "Inter", ui-sans-serif, system-ui, sans-serif;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
   }
   html {
-    @apply font-sans;
+    font-family: "Inter", ui-sans-serif, system-ui, sans-serif;
+  }
+}
+
+/* ─── WFC Utility Classes ───────────────────────────────────── */
+@layer utilities {
+  .wfc-card {
+    background: var(--wfc-surface);
+    border: 1px solid var(--wfc-border);
+    border-radius: var(--radius);
+  }
+
+  .wfc-card-2 {
+    background: var(--wfc-surface-2);
+    border: 1px solid var(--wfc-border);
+    border-radius: var(--radius);
+  }
+
+  .wfc-green-glow {
+    box-shadow: 0 0 20px rgba(34, 197, 94, 0.15);
+  }
+
+  .wfc-green-text {
+    color: var(--wfc-green);
+  }
+
+  .wfc-badge-green {
+    background: var(--wfc-green-dim);
+    color: var(--wfc-green);
+    border: 1px solid rgba(34, 197, 94, 0.25);
+    border-radius: 9999px;
+    padding: 2px 10px;
+    font-size: 0.7rem;
+    font-weight: 600;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+  }
+
+  .stat-card {
+    background: var(--wfc-surface);
+    border: 1px solid var(--wfc-border);
+    border-radius: var(--radius);
+    padding: 1.25rem;
+    transition: border-color 0.2s, box-shadow 0.2s;
+  }
+
+  .stat-card:hover {
+    border-color: rgba(34, 197, 94, 0.3);
+    box-shadow: 0 0 16px rgba(34, 197, 94, 0.08);
+  }
+
+  /* Scrollbar styling */
+  ::-webkit-scrollbar {
+    width: 5px;
+    height: 5px;
+  }
+  ::-webkit-scrollbar-track {
+    background: var(--wfc-surface);
+  }
+  ::-webkit-scrollbar-thumb {
+    background: var(--wfc-border);
+    border-radius: 99px;
+  }
+  ::-webkit-scrollbar-thumb:hover {
+    background: var(--wfc-green-dark);
   }
 }
